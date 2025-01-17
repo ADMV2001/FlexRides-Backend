@@ -19,7 +19,7 @@ app.use((req, res, next)=>{
 
     if(token !=null){
         token = token.replace("Bearer ","")
-        jwt.verify(token, "admv-secret-123", (err, decoded)=>{
+        jwt.verify(token, process.enc.jwt_secret, (err, decoded)=>{
             if(!err){
                 console.log(decoded)
                 req.user = decoded
