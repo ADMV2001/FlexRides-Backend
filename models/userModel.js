@@ -30,6 +30,11 @@ let userSchema = mongoose.Schema({
     mobile : {
         type : String,
         required : true
+    },
+    profilePic : {
+        type : String,
+        required : true,
+        default : 'https://icons8.com/icon/7819/male-user'
     }
 });
 
