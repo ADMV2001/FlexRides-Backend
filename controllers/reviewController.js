@@ -1,5 +1,6 @@
 import Review from "../models/reviewModel.js";
 
+//adding a review-----------------------------------------------------------------
 export function addReview(req, res){
 
     if(req.user == null){
@@ -27,6 +28,7 @@ export function addReview(req, res){
     })
 }
 
+//getting reviews-----------------------------------------------------------------
 export function getReviews(req, res){
 
     if(req.user == null || req.user.userRole != 'admin'){
@@ -49,6 +51,7 @@ export function getReviews(req, res){
     }
 }
 
+//deleting a review-----------------------------------------------------------------
 export function deleteReview(req, res){
     const email = req.params.email
 
@@ -86,6 +89,7 @@ export function deleteReview(req, res){
     }
 }
 
+//approving a review-----------------------------------------------------------------
 export function approveReview(req, res){
     const email = req.params.email
 
