@@ -53,7 +53,8 @@ export async function loginUser(req, res){
                     lastName : user.lastName,
                     email : user.email,
                     userRole : user.userRole,
-                    profilePic : user.profilePic
+                    profilePic : user.profilePic,
+                    mobile : user.mobile
                 },process.env.jwt_secret)
 
                 res.status(200).json({message : "Login successful!", token : token})
@@ -65,8 +66,7 @@ export async function loginUser(req, res){
             }
         }
     }catch(err){
-        console.log(err)
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json(err);
     }
 
     
@@ -103,3 +103,26 @@ export async function loginUser(req, res){
 */
 }
 
+export function isAdmin(req){
+
+    let admin = false
+
+    if(req.user != null){
+        if(req.user.userRole == 'admin'){
+            admin = true
+        }
+    }
+    return admin
+}
+
+export function isCustomer(req){
+
+    let customer = false;
+
+    if(req.user != null){
+        if(req.user.userRole == 'customer'){
+            customer = true
+        }
+    }
+    return customer
+}
