@@ -7,19 +7,21 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import reviewRouter from "./routes/reviewRouter.js";
 import inquiryRouter from "./routes/inquiryRouter.js";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(cors());
 
 //middleware to check the token of the user
 app.use((req, res, next)=>{
 
     let token = req.header("Authorization")
 
-    if(token !=null){
+    if(token != null){
         token = token.replace("Bearer ","")
         jwt.verify(token, process.env.jwt_secret, (err, decoded)=>{
             if(!err){

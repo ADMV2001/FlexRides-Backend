@@ -57,7 +57,7 @@ export async function loginUser(req, res){
                     mobile : user.mobile
                 },process.env.jwt_secret)
 
-                res.status(200).json({message : "Login successful!", token : token})
+                res.status(200).json({message : "Login successful!", token : token, user : user})
                 return
             }
             else{
