@@ -13,14 +13,13 @@ export async function registerUser(req, res){
 
     const newUser = new User(userData);
     
-    try{
-        await newUser.save()
-        res.status(200).json({message : "User registered successfully"})
-    }catch(err){
-        (err)=>{
-            res.json(err)
-        }
+    try {
+        await newUser.save();
+        res.status(200).json({ message: "User registered successfully!" });
+    } catch (err) {
+        res .json({ message: "User registration failed!", error: err.message });
     }
+    
 /*
     newUser.save().then(
         (result)=>{

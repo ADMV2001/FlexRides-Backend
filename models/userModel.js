@@ -13,7 +13,7 @@ let userSchema = mongoose.Schema({
     userRole : {
         type : String,
         required : true,
-        default : 'user' //if we did not provide the type then it will be user by default
+        default : 'customer' //if we did not provide the type then it will be user by default
     },
     firstName : {
         type : String,

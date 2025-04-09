@@ -10,7 +10,7 @@ export async function addProduct(req, res){
     }
 
     if(req.user.userRole != "admin"){
-        res.status(403).jason({message : "You are not authorized to add a product!"})
+        res.status(403).json({message : "You are not authorized to add a product!"})
         return
     }
 
@@ -38,7 +38,7 @@ export async function getProducts(req, res){
                 res.json(products)
             }
     }catch(err){
-        res.status(500).json({message : "Failed to get products!"})
+        res.json({message : "Failed to get products!"})
     }
 }
 
