@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import reviewRouter from "./routes/reviewRouter.js";
 import inquiryRouter from "./routes/inquiryRouter.js";
+import orderRouter from "./routes/orderRouter.js";
 import cors from "cors";
 
 dotenv.config();
@@ -47,6 +48,7 @@ app.use("/api/users",userRouter)
 app.use("/api/products", productRouter)
 app.use("/api/reviews", reviewRouter)
 app.use("/api/inquiries", inquiryRouter)
+app.use("/api/orders", orderRouter)
 
 
 app.listen(3000,()=>{
