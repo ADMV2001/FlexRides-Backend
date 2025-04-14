@@ -1,22 +1,25 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 
-export default async function createOrder(req, res) {
+export async function createOrder(req, res) {
     const data = req.body;
-    const orderInfo = {};
+    const orderInfo = {
+        orderedItems: []
+    }; //data will be pushed into here
 
     // Check if the user is logged in
     if (!req.user) {
-        return res.json({ message: "Please login and try again!" });
+        res.json({ message: "Please login and try again!" });
+        return
     }
 
     // Get user's email
     orderInfo.email = req.user.email;
 
     // Generate unique orderId
-    const lastOrder = await Order.find().sort({ orderDate: -1 }).limit(1);
+    const lastOrder = await Order.find().sort({ orderDate: -1 }).limit(1); //get the last orderId
     
-    if (lastOrder.length === 0) {
+    if (lastOrder.length == 0) {
         orderInfo.orderId = "ORD-0001";
     } else {
         const lastOrderId = lastOrder[0].orderId;
@@ -26,39 +29,54 @@ export default async function createOrder(req, res) {
         orderInfo.orderId = "ORD-" + formattedOrderNumber;
     }
 
-    // Find the selected product
-    try {
-        const product = await Product.findOne({ key: data.productKey });
+    let oneDayCost = 0;
 
-        if (!product) {
-            return res.json({ message: "Product with key '" + data.productKey + "' is not found!" });
+    for(let i=0; i<data.orderedItems.length; i++){
+        try{
+            const product = await Product.findOne({key: data.orderedItems[i].key})
+
+            if(product == null){
+                res.json({message: "Product with key " + data.orderedItems[i].key + " not found!"})
+                return
+            }
+
+            if(product.isAvailable == false){
+                res.json({message: "Product with key " + data.orderedItems[i].key + " is not available!"})
+                return
+            }
+
+            orderInfo.orderedItems.push({
+                product : {
+                    key : product.key,
+                    name : product.name,
+                    image : product.image[0],
+                    price : product.price
+                },
+                quantity : data.orderedItems[i].quantity
+            })
+
+            oneDayCost += product.price * data.orderedItems[i].quantity
         }
-
-        if (!product.isAvailable) {
-            return res.json({ message: "Product with key '" + data.productKey + "' is not available!" });
+        catch(err){
+            console.log(err)
+            res.json({message: "Error while creating order!"})
+            return
         }
+    }
 
-        // Attach product info to the order
-        orderInfo.product = {
-            key: product.key,
-            name: product.name,
-            image: product.image[0],
-            price: product.price
-        };
+    orderInfo.days = data.days;
+    orderInfo.startingDate = data.startingDate;
+    orderInfo.endingDate = data.endingDate;
+    orderInfo.totalAmount = oneDayCost * data.days;
 
-        // Add other order details
-        orderInfo.days = data.days;
-        orderInfo.startingDate = data.startingDate;
-        orderInfo.endingDate = data.endingDate;
-        orderInfo.totalAmount = product.price * data.days;
-
-        // Save order to DB
-        const newOrder = new Order(orderInfo);
-        const result = await newOrder.save();
-
-        res.json({ message: "Order created successfully!", result: result });
-    } catch (err) {
-        console.error(err);
-        res.json({ message: "Error creating order!" });
+    try{
+        const newOrder = new Order(orderInfo)
+        const result = await newOrder.save()
+        res.json({message: "Order created successfully!", order: result})
+    }
+    catch(err){
+        console.log(err)
+        res.json({message: "Error while creating order!!"})
+        return
     }
 }

@@ -16,24 +16,35 @@ const orderSchema = mongoose.Schema({
     required: true
   },
 
-  // Changed from orderedItems (array) to single product object
-  product: {
-    key: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      required: true
-    },
-    image: {
-      type: String,
-      required: true
-    },
-    price: {
-      type: Number,
-      required: true
-    }
+  //list of ordered items
+  orderedItems: {
+    type : [
+      {
+        product : {
+          key : {
+            type : String,
+            required : true
+          },
+          name : {
+            type : String,
+            required : true
+          },
+          image : {
+            type : String,
+            required : true
+          },
+          price : {
+            type : Number,
+            required : true
+          }
+        },
+        quantity : {
+          type : Number,
+          required : true
+        }
+      }
+    ],
+    required: true  
   },
 
   days: {
@@ -58,6 +69,6 @@ const orderSchema = mongoose.Schema({
   }
 });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.model("Orders", orderSchema);
 
 export default Order;
