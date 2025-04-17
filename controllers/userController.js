@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import axios from "axios";
 
 dotenv.config()
 
@@ -182,4 +183,68 @@ export function getOneUser(req, res) {
     else{
         res.json({ message: "User not found!" });
     }
+}
+
+export async function loginWithGoogle(req, res){
+    const accessToken = req.body.accessToken
+    console.log(accessToken)
+
+    try{
+        const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        })
+
+        console.log(response.data)
+
+        const user = await User.findOne({email : response.data.email})
+
+        if(user){
+            if(user.isBlocked){
+                res.status(403).json({message : "You are blocked by admin!"})
+                return
+            }
+            const token = jwt.sign({
+                firstName : user.firstName,
+                lastName : user.lastName,
+                email : user.email,
+                userRole : user.userRole,
+                profilePic : user.profilePic,
+                mobile : user.mobile
+            },process.env.jwt_secret)
+
+            res.status(200).json({message : "Login successful!", token : token, user : user})
+        }
+        else{
+            const newUser = new User({
+                firstName : response.data.given_name,
+                lastName : response.data.family_name,
+                email : response.data.email,
+                password : "googlelogger000#",
+                profilePic : response.data.picture,
+                address : "Not provided",
+                mobile : "Not provided",
+                profilePic : response.data.picture
+            })
+
+            const savedUser = await newUser.save()
+
+            const token = jwt.sign({
+                firstName : savedUser.firstName,
+                lastName : savedUser.lastName,
+                email : savedUser.email,
+                userRole : savedUser.userRole,
+                profilePic : savedUser.profilePic,
+                mobile : savedUser.mobile
+            },process.env.jwt_secret)
+
+            res.status(200).json({message : "Login successful!", token : token, user : savedUser})
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({message : "Error while fetching user data from google!"})
+    }
+    
 }
