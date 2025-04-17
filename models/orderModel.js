@@ -66,6 +66,11 @@ const orderSchema = mongoose.Schema({
   isApproved: {
     type: Boolean,
     default: false
+  },
+  status :{
+    type : String,
+    required : true,
+    default : "Pending"
   }
 });
 

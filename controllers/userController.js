@@ -43,6 +43,10 @@ export async function loginUser(req, res){
             res.status(404).json({message : "User not found, please enter correct email and password!"})
         }
         else{
+            if(user.isBlocked){
+                res.status(403).json({message : "You are blocked by admin!"})
+                return
+            }
             //compare the hashes of password
             let isMatch = bcrypt.compareSync(loginData.password, user.password);
             //if password is correct then login is successful
@@ -102,6 +106,21 @@ export async function loginUser(req, res){
 */
 }
 
+export async function getAllUsers(req, res){
+    if(isAdmin(req)){
+        try{
+            const users = await User.find()
+            res.json(users)
+        }
+        catch(err){
+            res.json({message : "Error while fetching users!"})
+        }
+    }
+    else{
+        res.status(403).json({message : "Access denied!"})
+    }
+}
+
 export function isAdmin(req){
 
     let admin = false
@@ -124,4 +143,43 @@ export function isCustomer(req){
         }
     }
     return customer
+}
+
+export async function blockOrUnblockUser(req, res){
+    const email = req.params.email;
+
+    if(isAdmin(req)){
+        try{
+            const user = await User.findOne({
+                email : email
+            })
+
+            if(user == null){
+                res.status(404).json({message : "User not found!"})
+            }
+
+            const isBlocked = !user.isBlocked
+
+            await User.updateOne(
+                {email : email}, {isBlocked : isBlocked}
+            )
+
+            res.json({message : "User is blocked/unblocked successfully!"})
+        }
+        catch(err){
+            res.json({message : "Error while fetching user!"})
+        }
+    }
+    else{
+        res.status(403).json({message : "Access denied!"})
+    }
+}
+
+export function getOneUser(req, res) {
+    if(req.user != null){
+        res.json(req.user);
+    }
+    else{
+        res.json({ message: "User not found!" });
+    }
 }
