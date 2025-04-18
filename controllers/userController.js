@@ -3,8 +3,22 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import axios from "axios";
+import nodemailer from "nodemailer";
+import OTP from "../models/otpModel.js";
 
 dotenv.config()
+
+//creating a transporter
+const transport = nodemailer.createTransport({
+    service : "gmail",
+    host : "smtp.gmail.com",
+    port : 587,
+    secure : false,
+    auth : {
+        user : "scottleon1985@gmail.com",
+        pass : "uopomtmhhzuodzix" 
+    }, 
+})
 
 export async function registerUser(req, res){
 
@@ -58,7 +72,8 @@ export async function loginUser(req, res){
                     email : user.email,
                     userRole : user.userRole,
                     profilePic : user.profilePic,
-                    mobile : user.mobile
+                    mobile : user.mobile,
+                    emailVerified : user.emailVerified
                 },process.env.jwt_secret)
 
                 res.status(200).json({message : "Login successful!", token : token, user : user})
@@ -200,18 +215,16 @@ export async function loginWithGoogle(req, res){
 
         const user = await User.findOne({email : response.data.email})
 
-        if(user){
-            if(user.isBlocked){
-                res.status(403).json({message : "You are blocked by admin!"})
-                return
-            }
+        if(user != null){
+            
             const token = jwt.sign({
                 firstName : user.firstName,
                 lastName : user.lastName,
                 email : user.email,
                 userRole : user.userRole,
                 profilePic : user.profilePic,
-                mobile : user.mobile
+                mobile : user.mobile,
+                emailVerified : true
             },process.env.jwt_secret)
 
             res.status(200).json({message : "Login successful!", token : token, user : user})
@@ -225,7 +238,8 @@ export async function loginWithGoogle(req, res){
                 profilePic : response.data.picture,
                 address : "Not provided",
                 mobile : "Not provided",
-                profilePic : response.data.picture
+                profilePic : response.data.picture,
+                emailVerified : true
             })
 
             const savedUser = await newUser.save()
@@ -236,7 +250,8 @@ export async function loginWithGoogle(req, res){
                 email : savedUser.email,
                 userRole : savedUser.userRole,
                 profilePic : savedUser.profilePic,
-                mobile : savedUser.mobile
+                mobile : savedUser.mobile,
+                emailVerified : savedUser.emailVerified
             },process.env.jwt_secret)
 
             res.status(200).json({message : "Login successful!", token : token, user : savedUser})
@@ -247,4 +262,77 @@ export async function loginWithGoogle(req, res){
         res.status(500).json({message : "Error while fetching user data from google!"})
     }
     
+}
+
+export async function sendOtp(req, res){
+    if(req.user == null){
+        res.status(403).json({message : "Access denied!"})
+        return
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000) 
+
+    const newOtp = new OTP({
+        email : req.user.email,
+        otp : otp
+    })
+
+    await newOtp.save()
+
+    //creating the email body
+    const message = {
+        from : "scottleon1985@gmail.com",
+        to : req.user.email,
+        subject : "OTP for verification",
+        text : "Your OTP for verification is "+ otp
+    }
+
+    transport.sendMail(message, (err, info)=>{
+        if(err){
+            console.log(err)
+            res.json({message : "Error while sending email!"})
+        }
+        else{
+            console.log(info)
+            res.json({message : "Verification email sent successfully!"})
+        }
+    })
+}
+
+export async function verifyOtp(req, res){
+    if(req.user == null){
+        res.status(403).json({message : "Access denied!"})
+        return
+    }
+
+    const code = req.body.code
+
+    const otp = await OTP.findOne({
+        email : req.user.email,
+        otp : code
+    })
+
+    if(otp == null){
+        res.json({message : "Invalid OTP!"})
+        return
+    }
+    else{
+        await OTP.deleteOne({
+            email : req.user.email,
+            otp : code
+        })
+    }
+
+    await User.updateOne(
+        {
+        email : req.user.email
+        }, 
+        {
+            emailVerified : true
+        }
+    )
+
+    res.json({message : "Email verified successfully!"})
+
+   
 }

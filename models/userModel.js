@@ -40,6 +40,11 @@ let userSchema = mongoose.Schema({
         type : String,
         required : true,
         default : 'https://icons8.com/icon/7819/male-user'
+    },
+    emailVerified : {
+        type : Boolean,
+        required : true,
+        default : false
     }
 });
 
